@@ -4,7 +4,8 @@ open ExtLib
 let maxiter = 50
 let epsabs = 1e-4
 let epsrel = 1e-4
-let num_x = 3
+let xinit = Gsl.Vector.of_array [| 1.0; 0.1; 1.0 |]
+let num_x = Gsl.Vector.length xinit
 
 let my_fun t x =
   assert (Gsl.Vector.length x = num_x);
@@ -107,7 +108,6 @@ let () =
   let n = Array.length t in
   assert (n = Array.length y);
   let sigma = Array.make n 0.1 in
-  let xinit = Gsl.Vector.of_array [| 1.0; 0.1; 1.0 |] in
   let fit = Gsl.Multifit_nlin.make Gsl.Multifit_nlin.LMSDER ~n ~p:num_x (multi_funs t y sigma) xinit in
   solve fit;
   print_pos fit
