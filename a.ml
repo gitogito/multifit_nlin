@@ -63,7 +63,11 @@ let multi_funs t y sigma =
 let print_pos fit =
   let pos = Gsl.Vector.create num_x in
   Gsl.Multifit_nlin.position fit pos;
-  printf "%g\t%g\t%g\n" pos.{0} pos.{1} pos.{2}
+  printf "%g" pos.{0};
+  for i = 1 to num_x - 1 do
+    printf "\t%g" pos.{i}
+  done;
+  print_newline ()
 
 let solve fit =
   let rec aux n =
