@@ -10,7 +10,7 @@ BEGIN {
     }
 }
 
-function f(x,   y) {
+function f(x,   y, r) {
     y = na * exp(-(x - m)^2 / (2*s^2))
     r = (rand() - 0.5) / 10
     if (y + r < 0.0) r = 0
