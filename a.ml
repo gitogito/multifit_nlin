@@ -4,23 +4,26 @@ open ExtLib
 let maxiter = 50
 let epsabs = 1e-4
 let epsrel = 1e-4
-let xinit = Gsl.Vector.of_array [| 1.0; 0.1; 1.0 |]
+let xinit = Gsl.Vector.of_array [| 1.0; 1.0; 1.0; 1.0 |]
 let num_x = Gsl.Vector.length xinit
 
-let my_fun t x =
+let my_fun x t =
   assert (Gsl.Vector.length x = num_x);
   let open! Flop in
-  x.{0} * exp (-((t - x.{1})**2. / (2. * x.{2}**2.)))
+  x.{0} * t ** 3.0 +
+  x.{1} * t ** 2.0 +
+  x.{2} * t ** 1.0 +
+  x.{3} * t ** 0.0
 
-let df_my_fun t x n =
+let df_my_fun n x t =
   assert (Gsl.Vector.length x = num_x);
-  let xa = Gsl.Vector.copy x in
-  let xb = Gsl.Vector.copy x in
-  xa.{n} <- x.{n} -. epsabs;
-  xb.{n} <- x.{n} +. epsabs;
-  let ya = my_fun t xa in
-  let yb = my_fun t xb in
-  (yb -. ya) /. (2. *. epsabs)
+  let f x' =
+    let x_copy = Gsl.Vector.copy x in
+    x_copy.{n} <- x';
+    my_fun x_copy t
+  in
+  let res = Gsl.Deriv.central ~f ~x:x.{n} ~h:epsabs in
+  res.Gsl.Fun.res
 
 let multi_funs t y sigma =
   let multi_f ~x ~f =
@@ -30,9 +33,8 @@ let multi_funs t y sigma =
     assert (Array.length y = n);
     assert (Array.length sigma = n);
     for i = 0 to pred n do
-      (* model Yi = na * exp(-(x-m)**2 / (2*s**2)) *)
       let open! Flop in
-      let yi = my_fun t.(i) x in
+      let yi = my_fun x t.(i) in
       f.{i} <- (yi - y.(i)) / sigma.(i)
     done
   in
@@ -41,13 +43,9 @@ let multi_funs t y sigma =
     assert (Gsl.Vector.length x = p);
     assert (Array.length sigma = n);
     for i = 0 to pred n do
-      (* Jacobian matrix J(i,j) = dfi / dxj,        *) 
-      (* where fi = (Yi - yi)/sigma[i],             *) 
-      (*       Yi = na * exp(-(x-m)**2 / (2*s**2)) *)
-      (* and the xj are the parameters (A,lambda,b) *) 
       let sgm = sigma.(i) in
       for k = 0 to num_x - 1 do
-        j.{i, k} <- df_my_fun t.(i) x k /. sgm
+        j.{i, k} <- df_my_fun k x t.(i) /. sgm
       done
     done
   in
