@@ -17,8 +17,8 @@ let my_fun x t =
 
 let df_my_fun n x t =
   assert (Gsl.Vector.length x = num_x);
+  let x_copy = Gsl.Vector.copy x in
   let f x' =
-    let x_copy = Gsl.Vector.copy x in
     x_copy.{n} <- x';
     my_fun x_copy t
   in
